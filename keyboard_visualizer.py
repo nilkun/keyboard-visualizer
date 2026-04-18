@@ -30,6 +30,7 @@ class KeyboardVisualizer:
         self.running = True
         self.use_evdev = use_evdev and EVDEV_AVAILABLE
         self.keyboard_device = None
+        self.needs_render = True  # Flag to track if re-render is needed
         
     def load_config(self, path):
         """Load keyboard layout configuration from JSON file"""
@@ -236,32 +237,32 @@ class KeyboardVisualizer:
                 # Order: Shift, Base, Alt, AltGr, Ctrl
                 if shift:
                     if shift == active:
-                        parts.append(f"{{{config.get('highlight_color', 'orange')}}}{shift}")
+                        parts.append(f"{shift}{{{config.get('highlight_color', 'orange')}}}")
                     else:
-                        parts.append(f"{{gray}}{shift}")
+                        parts.append(f"{shift}{{gray}}")
                 
                 if base == active:
-                    parts.append(f"{{{config.get('highlight_color', 'orange')}}}{base}")
+                    parts.append(f"{base}{{{config.get('highlight_color', 'orange')}}}")
                 else:
                     parts.append(base)
                 
                 if alt:
                     if alt == active:
-                        parts.append(f"{{{config.get('highlight_color', 'orange')}}}{alt}")
+                        parts.append(f"{alt}{{{config.get('highlight_color', 'orange')}}}")
                     else:
-                        parts.append(f"{{gray}}{alt}")
+                        parts.append(f"{alt}{{gray}}")
                 
                 if altgr:
                     if altgr == active:
-                        parts.append(f"{{{config.get('highlight_color', 'orange')}}}{altgr}")
+                        parts.append(f"{altgr}{{{config.get('highlight_color', 'orange')}}}")
                     else:
-                        parts.append(f"{{gray}}{altgr}")
+                        parts.append(f"{altgr}{{gray}}")
                 
                 if ctrl:
                     if ctrl == active:
-                        parts.append(f"{{{config.get('highlight_color', 'orange')}}}{ctrl}")
+                        parts.append(f"{ctrl}{{{config.get('highlight_color', 'orange')}}}")
                     else:
-                        parts.append(f"{{gray}}{ctrl}")
+                        parts.append(f"{ctrl}{{gray}}")
                 
                 return ''.join(parts)
             
@@ -382,9 +383,11 @@ class KeyboardVisualizer:
         if normalized in ['Shift', 'Ctrl', 'Alt', 'Win']:
             with self.lock:
                 self.modifier_keys.add(normalized)
+                self.needs_render = True
         
         with self.lock:
             self.pressed_keys[normalized] = actual_output
+            self.needs_render = True
     
     def on_release(self, key):
         """Handle key release event"""
@@ -394,9 +397,11 @@ class KeyboardVisualizer:
         if normalized in ['Shift', 'Ctrl', 'Alt', 'Win']:
             with self.lock:
                 self.modifier_keys.discard(normalized)
+                self.needs_render = True
         
         with self.lock:
             self.pressed_keys.pop(normalized, None)
+            self.needs_render = True
     
     def find_keyboard_device(self):
         """Find keyboard input device for evdev"""
@@ -510,18 +515,22 @@ class KeyboardVisualizer:
                         if normalized in ['Shift', 'Ctrl', 'Alt', 'Win']:
                             with self.lock:
                                 self.modifier_keys.add(normalized)
+                                self.needs_render = True
                         
                         with self.lock:
                             self.pressed_keys[normalized] = actual_output
+                            self.needs_render = True
                     
                     elif event.value == 0:  # Key up
                         # Remove modifier keys
                         if normalized in ['Shift', 'Ctrl', 'Alt', 'Win']:
                             with self.lock:
                                 self.modifier_keys.discard(normalized)
+                                self.needs_render = True
                         
                         with self.lock:
                             self.pressed_keys.pop(normalized, None)
+                            self.needs_render = True
         
         finally:
             if self.keyboard_device:
@@ -530,9 +539,22 @@ class KeyboardVisualizer:
     
     def render_loop(self):
         """Continuous rendering loop"""
+        # Initial render
+        self.render_keyboard()
+        
         while self.running:
-            self.render_keyboard()
-            time.sleep(0.05)  # 20 FPS
+            # Only render if something changed
+            with self.lock:
+                if self.needs_render:
+                    self.needs_render = False
+                    should_render = True
+                else:
+                    should_render = False
+            
+            if should_render:
+                self.render_keyboard()
+            
+            time.sleep(0.016)  # ~60 FPS check rate, but only renders on change
     
     def run(self):
         """Start the keyboard visualizer"""
