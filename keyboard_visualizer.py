@@ -465,7 +465,6 @@ class KeyboardVisualizer:
                 # Check if it has typical keyboard keys
                 keys = capabilities[ecodes.EV_KEY]
                 if ecodes.KEY_Q in keys and ecodes.KEY_A in keys:
-                    print(f"Using keyboard device: {device.name} ({device.path})")
                     return device
         return None
     
@@ -535,10 +534,14 @@ class KeyboardVisualizer:
             self.running = False
             return
         
+        print(f"Using keyboard device: {self.keyboard_device.name} ({self.keyboard_device.path})")
+        
         # Grab the device to block input
         try:
             self.keyboard_device.grab()
             print(f"Grabbed keyboard device - input is now blocked (press 'q' to quit, or Ctrl+C)")
+            print("Waiting 2 seconds before starting...")
+            time.sleep(2)  # Give user time to read the message
         except Exception as e:
             print(f"Error grabbing device (are you running with sudo?): {e}")
             self.running = False
@@ -629,13 +632,14 @@ class KeyboardVisualizer:
     
     def run(self):
         """Start the keyboard visualizer"""
-        # Start render thread
-        render_thread = threading.Thread(target=self.render_loop, daemon=True)
-        render_thread.start()
-        
         if self.use_evdev:
             # Use evdev for true input blocking
             print("Running with evdev (true input blocking enabled)")
+            # Start render thread AFTER printing messages
+            render_thread = threading.Thread(target=self.render_loop, daemon=True)
+            render_thread.start()
+            # Give render thread time to do initial render
+            time.sleep(0.1)
             self.evdev_loop()
         else:
             # Use pynput (no true blocking)
@@ -645,6 +649,10 @@ class KeyboardVisualizer:
                 print("Running with pynput (no input blocking). Run with sudo and --evdev for true blocking.")
             else:
                 print("Running with pynput (evdev not available). Install python-evdev for true blocking.")
+            
+            # Start render thread
+            render_thread = threading.Thread(target=self.render_loop, daemon=True)
+            render_thread.start()
             
             # Start keyboard listener
             with keyboard.Listener(
