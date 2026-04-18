@@ -2,9 +2,9 @@
   "layout": [
     ["Esc", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"],
     ["`", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "Backspace"],
-    ["Tab", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "[", "]", "\\"],
-    ["Caps", "A", "S", "D", "F", "G", "H", "J", "K", "L", ";", "'", "Enter"],
-    ["Shift", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "/", "Shift"],
+    ["Tab", "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "[", "]", "\\"],
+    ["Caps", "a", "s", "d", "f", "g", "h", "j", "k", "l", ";", "'", "Enter"],
+    ["Shift", "z", "x", "c", "v", "b", "n", "m", ",", ".", "/", "Shift"],
     ["Ctrl", "Win", "Alt", "Space", "Alt", "Fn", "Ctrl"]
   ],
   "default_key_width": 5,
@@ -24,11 +24,11 @@
   "border_char": "─",
   "highlight_color": "orange",
   "key_labels": {
-    "W": "W{red}A{blue}S{green}D",
-    "A": "←",
-    "S": "↓",
-    "D": "→",
-    "Space": "J{cyan}U{magenta}M{yellow}P",
+    "w": "w{red}a{blue}s{green}d",
+    "a": "←",
+    "s": "↓",
+    "d": "→",
+    "Space": "j{cyan}u{magenta}m{yellow}p",
     "Enter": "⏎",
     "Backspace": "⌫",
     "Shift": "⇧",
@@ -36,12 +36,12 @@
     "Alt": "⎇"
   },
   "key_colors": {
-    "W": "bright_green",
-    "A": "bright_green",
-    "S": "bright_green",
-    "D": "bright_green",
+    "w": "bright_green",
+    "a": "bright_green",
+    "s": "bright_green",
+    "d": "bright_green",
     "Space": "bright_cyan",
     "Enter": "bright_yellow",
-    "Q": "bright_red"
+    "q": "bright_red"
   }
 }

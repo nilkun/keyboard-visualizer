@@ -181,12 +181,13 @@ class KeyboardVisualizer:
             return key_labels[key]
         
         # Check if this is a letter key (A-Z) and auto-generate alternatives
-        if key in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
-            if key not in key_alternatives:
+        if key in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz':
+            key_upper = key.upper()
+            if key_upper not in key_alternatives:
                 # Auto-generate shift/base alternatives for letters
-                key_alternatives[key] = {
-                    'base': key.lower(),
-                    'shift': key.upper()
+                key_alternatives[key_upper] = {
+                    'base': key_upper.lower(),
+                    'shift': key_upper
                 }
         
         # If pressed, return actual character for base mode
