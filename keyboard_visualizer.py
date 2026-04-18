@@ -550,9 +550,7 @@ class KeyboardVisualizer:
             for device in self.keyboard_devices:
                 device.grab()
             print(f"\nGrabbed {len(self.keyboard_devices)} keyboard device(s) - input is now blocked")
-            print("Press 'q' to quit, or Ctrl+C")
-            print("Waiting 2 seconds before starting...")
-            time.sleep(2)  # Give user time to read the message
+            print("Press 'q' to quit, or Ctrl+C\n")
         except Exception as e:
             print(f"Error grabbing devices (are you running with sudo?): {e}")
             self.running = False
