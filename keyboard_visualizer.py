@@ -46,9 +46,9 @@ class KeyboardVisualizer:
             "layout": [
                 ["Esc", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"],
                 ["`", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "Backspace"],
-                ["Tab", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "[", "]", "\\"],
-                ["Caps", "A", "S", "D", "F", "G", "H", "J", "K", "L", ";", "'", "Enter"],
-                ["Shift", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "/", "Shift"],
+                ["Tab", "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "[", "]", "\\"],
+                ["Caps", "a", "s", "d", "f", "g", "h", "j", "k", "l", ";", "'", "Enter"],
+                ["ShiftL", "z", "x", "c", "v", "b", "n", "m", ",", ".", "/", "ShiftR"],
                 ["Ctrl", "Win", "Alt", "Space", "Alt", "Fn", "Ctrl"]
             ],
             "default_key_width": 5,
@@ -57,9 +57,10 @@ class KeyboardVisualizer:
             "normal_char": "░",
             "border_char": "─",
             "highlight_color": "orange",
+            "display_mode": "base",
+            "key_display_names": {},
             "key_labels": {},
             "key_colors": {},
-            "display_mode": "base",
             "key_alternatives": {}
         }
     
@@ -175,20 +176,25 @@ class KeyboardVisualizer:
         display_mode = config.get('display_mode', 'base')
         key_alternatives = config.get('key_alternatives', {})
         key_labels = config.get('key_labels', {})
+        key_display_names = config.get('key_display_names', {})
         
-        # If custom label is defined, use it
+        # If custom label is defined (with colors), use it - highest priority
         if key in key_labels:
             return key_labels[key]
         
+        # If simple display name is defined, use it - second priority
+        if key in key_display_names:
+            return key_display_names[key]
+        
         # Handle ShiftL/ShiftR display
         if key == 'ShiftL':
-            return 'Shift' if not is_pressed else 'Shift'
+            return key_display_names.get('ShiftL', 'Shift')
         elif key == 'ShiftR':
-            return 'Shift' if not is_pressed else 'Shift'
+            return key_display_names.get('ShiftR', 'Shift')
         elif key == 'CtrlL':
-            return 'Ctrl' if not is_pressed else 'Ctrl'
+            return key_display_names.get('CtrlL', 'Ctrl')
         elif key == 'CtrlR':
-            return 'Ctrl' if not is_pressed else 'Ctrl'
+            return key_display_names.get('CtrlR', 'Ctrl')
         
         # Check if this is a letter key (A-Z) and auto-generate alternatives
         if key in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz':

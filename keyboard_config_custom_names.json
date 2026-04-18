@@ -8,13 +8,29 @@
     ["Ctrl", "Win", "Alt", "Space", "Alt", "Fn", "Ctrl"]
   ],
   "default_key_width": 5,
-  "key_widths": {},
+  "key_widths": {
+    "Backspace": 9,
+    "Enter": 8,
+    "ShiftL": 8,
+    "ShiftR": 8,
+    "Space": 20
+  },
   "highlight_char": "█",
   "normal_char": "░",
   "border_char": "─",
-  "highlight_color": "orange",
+  "highlight_color": "bright_cyan",
   "display_mode": "base",
-  "key_display_names": {},
+  "key_display_names": {
+    "Enter": "return",
+    "Backspace": "⌫ bksp",
+    "ShiftL": "⇧ L",
+    "ShiftR": "⇧ R",
+    "Caps": "⇪ caps",
+    "Ctrl": "ctrl",
+    "Alt": "alt",
+    "Space": "space",
+    "Esc": "esc"
+  },
   "key_labels": {},
   "key_colors": {},
   "key_alternatives": {}
