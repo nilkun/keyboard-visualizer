@@ -29,7 +29,7 @@ class KeyboardVisualizer:
         self.lock = threading.Lock()
         self.running = True
         self.use_evdev = use_evdev and EVDEV_AVAILABLE
-        self.keyboard_device = None
+        self.keyboard_devices = []  # Multiple keyboard devices for evdev
         self.needs_render = True  # Flag to track if re-render is needed
         
     def load_config(self, path):
@@ -452,11 +452,12 @@ class KeyboardVisualizer:
             self.pressed_keys.pop(normalized, None)
             self.needs_render = True
     
-    def find_keyboard_device(self):
-        """Find keyboard input device for evdev"""
+    def find_keyboard_devices(self):
+        """Find all keyboard input devices for evdev"""
         if not EVDEV_AVAILABLE:
-            return None
+            return []
         
+        keyboards = []
         devices = [InputDevice(path) for path in evdev.list_devices()]
         for device in devices:
             # Look for a device with keyboard capabilities
@@ -465,8 +466,8 @@ class KeyboardVisualizer:
                 # Check if it has typical keyboard keys
                 keys = capabilities[ecodes.EV_KEY]
                 if ecodes.KEY_Q in keys and ecodes.KEY_A in keys:
-                    return device
-        return None
+                    keyboards.append(device)
+        return keyboards
     
     def normalize_evdev_key(self, event):
         """Normalize evdev key event - returns (normalized_name, actual_output)"""
@@ -528,88 +529,107 @@ class KeyboardVisualizer:
     
     def evdev_loop(self):
         """Event loop for evdev input grabbing"""
-        self.keyboard_device = self.find_keyboard_device()
-        if not self.keyboard_device:
-            print("Error: No keyboard device found!")
+        self.keyboard_devices = self.find_keyboard_devices()
+        if not self.keyboard_devices:
+            print("Error: No keyboard devices found!")
             self.running = False
             return
         
-        print(f"Using keyboard device: {self.keyboard_device.name} ({self.keyboard_device.path})")
+        print(f"Found {len(self.keyboard_devices)} keyboard device(s):")
+        for device in self.keyboard_devices:
+            print(f"  - {device.name} ({device.path})")
         
-        # Grab the device to block input
+        # Grab all keyboard devices to block input
         try:
-            self.keyboard_device.grab()
-            print(f"Grabbed keyboard device - input is now blocked (press 'q' to quit, or Ctrl+C)")
+            for device in self.keyboard_devices:
+                device.grab()
+            print(f"\nGrabbed {len(self.keyboard_devices)} keyboard device(s) - input is now blocked")
+            print("Press 'q' to quit, or Ctrl+C")
             print("Waiting 2 seconds before starting...")
             time.sleep(2)  # Give user time to read the message
         except Exception as e:
-            print(f"Error grabbing device (are you running with sudo?): {e}")
+            print(f"Error grabbing devices (are you running with sudo?): {e}")
             self.running = False
             return
         
+        # Use select to monitor all keyboards
+        import select
+        
         try:
-            for event in self.keyboard_device.read_loop():
-                if not self.running:
-                    break
+            device_map = {dev.fd: dev for dev in self.keyboard_devices}
+            
+            while self.running:
+                # Wait for events from any keyboard
+                r, w, x = select.select(self.keyboard_devices, [], [], 0.1)
                 
-                if event.type == ecodes.EV_KEY:
-                    key_event = categorize(event)
-                    
-                    # Check for 'q' to quit
-                    if event.code == ecodes.KEY_Q and event.value == 1:  # Key down
-                        self.running = False
-                        break
-                    
-                    # Check for Ctrl+C to quit
-                    if event.code == ecodes.KEY_C and event.value == 1:
-                        if 'CtrlL' in self.modifier_keys or 'CtrlR' in self.modifier_keys or 'Ctrl' in self.modifier_keys:
-                            self.running = False
-                            break
-                    
-                    normalized, actual_output = self.normalize_evdev_key(event)
-                    
-                    if event.value == 1:  # Key down
-                        # Track modifier keys
-                        if normalized in ['Shift', 'ShiftL', 'ShiftR', 'Ctrl', 'CtrlL', 'CtrlR', 'Alt', 'AltGr', 'Win']:
-                            with self.lock:
-                                self.modifier_keys.add(normalized)
-                                # Also add generic modifier for compatibility
-                                if normalized in ['ShiftL', 'ShiftR']:
-                                    self.modifier_keys.add('Shift')
-                                elif normalized in ['CtrlL', 'CtrlR']:
-                                    self.modifier_keys.add('Ctrl')
-                                self.needs_render = True
-                        
-                        with self.lock:
-                            self.pressed_keys[normalized] = actual_output
-                            self.needs_render = True
-                    
-                    elif event.value == 0:  # Key up
-                        # Remove modifier keys
-                        if normalized in ['Shift', 'ShiftL', 'ShiftR', 'Ctrl', 'CtrlL', 'CtrlR', 'Alt', 'AltGr', 'Win']:
-                            with self.lock:
-                                self.modifier_keys.discard(normalized)
-                                # Also remove generic modifier
-                                if normalized in ['ShiftL', 'ShiftR']:
-                                    # Only remove 'Shift' if both left and right are released
-                                    if 'ShiftL' not in self.modifier_keys and 'ShiftR' not in self.modifier_keys:
-                                        self.modifier_keys.discard('Shift')
-                                elif normalized in ['CtrlL', 'CtrlR']:
-                                    if 'CtrlL' not in self.modifier_keys and 'CtrlR' not in self.modifier_keys:
-                                        self.modifier_keys.discard('Ctrl')
-                                self.needs_render = True
-                        
-                        with self.lock:
-                            self.pressed_keys.pop(normalized, None)
-                            self.needs_render = True
+                for device in r:
+                    try:
+                        for event in device.read():
+                            if not self.running:
+                                break
+                            
+                            if event.type == ecodes.EV_KEY:
+                                key_event = categorize(event)
+                                
+                                # Check for 'q' to quit
+                                if event.code == ecodes.KEY_Q and event.value == 1:
+                                    self.running = False
+                                    break
+                                
+                                # Check for Ctrl+C to quit
+                                if event.code == ecodes.KEY_C and event.value == 1:
+                                    if 'CtrlL' in self.modifier_keys or 'CtrlR' in self.modifier_keys or 'Ctrl' in self.modifier_keys:
+                                        self.running = False
+                                        break
+                                
+                                normalized, actual_output = self.normalize_evdev_key(event)
+                                
+                                if event.value == 1:  # Key down
+                                    # Track modifier keys
+                                    if normalized in ['Shift', 'ShiftL', 'ShiftR', 'Ctrl', 'CtrlL', 'CtrlR', 'Alt', 'AltGr', 'Win']:
+                                        with self.lock:
+                                            self.modifier_keys.add(normalized)
+                                            # Also add generic modifier for compatibility
+                                            if normalized in ['ShiftL', 'ShiftR']:
+                                                self.modifier_keys.add('Shift')
+                                            elif normalized in ['CtrlL', 'CtrlR']:
+                                                self.modifier_keys.add('Ctrl')
+                                            self.needs_render = True
+                                    
+                                    with self.lock:
+                                        self.pressed_keys[normalized] = actual_output
+                                        self.needs_render = True
+                                
+                                elif event.value == 0:  # Key up
+                                    # Remove modifier keys
+                                    if normalized in ['Shift', 'ShiftL', 'ShiftR', 'Ctrl', 'CtrlL', 'CtrlR', 'Alt', 'AltGr', 'Win']:
+                                        with self.lock:
+                                            self.modifier_keys.discard(normalized)
+                                            # Also remove generic modifier
+                                            if normalized in ['ShiftL', 'ShiftR']:
+                                                if 'ShiftL' not in self.modifier_keys and 'ShiftR' not in self.modifier_keys:
+                                                    self.modifier_keys.discard('Shift')
+                                            elif normalized in ['CtrlL', 'CtrlR']:
+                                                if 'CtrlL' not in self.modifier_keys and 'CtrlR' not in self.modifier_keys:
+                                                    self.modifier_keys.discard('Ctrl')
+                                            self.needs_render = True
+                                    
+                                    with self.lock:
+                                        self.pressed_keys.pop(normalized, None)
+                                        self.needs_render = True
+                    except BlockingIOError:
+                        pass
         
         except KeyboardInterrupt:
             print("\nReceived Ctrl+C, exiting...")
             self.running = False
         finally:
-            if self.keyboard_device:
-                self.keyboard_device.ungrab()
-                print("Released keyboard device")
+            for device in self.keyboard_devices:
+                try:
+                    device.ungrab()
+                except:
+                    pass
+            print("Released keyboard devices")
     
     def render_loop(self):
         """Continuous rendering loop"""
