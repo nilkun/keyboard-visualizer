@@ -4,16 +4,17 @@
     ["Tab", "Q", "E", "E", "R", "T", "Y", "U", "I", "O", "P", "@", "[", "]"], 
     ["AltGr", "A", "S", "D", "F", "G", "H", "J", "K", "L", ";", ":", "Enter"],
     ["Shift", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "/", "Shift"],
-    ["Ctrl", "Esc", "F12", "Win", "Space", "Alt", "Fn", "Ctrl"]
+    ["Ctrl", "Esc", "F12", "Win", "Space", "Alt", "Fn", ""]
   ],
-  "default_key_width": 5,
+  "default_key_width": 6,
   "key_widths": {
     "Backspace": 9,
-    "Tab": 7,
-    "Caps": 8,
+    "Tab": 8,
+    "Caps": 10,
     "Enter": 9,
-    "Shift": 8,
+    "Shift": 12,
     "Space": 20
+	"AltGr": 12,
   },
   "highlight_char": "█",
   "normal_char": "░",

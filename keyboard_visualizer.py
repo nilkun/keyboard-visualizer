@@ -180,6 +180,16 @@ class KeyboardVisualizer:
         if key in key_labels:
             return key_labels[key]
         
+        # Handle ShiftL/ShiftR display
+        if key == 'ShiftL':
+            return 'Shift' if not is_pressed else 'Shift'
+        elif key == 'ShiftR':
+            return 'Shift' if not is_pressed else 'Shift'
+        elif key == 'CtrlL':
+            return 'Ctrl' if not is_pressed else 'Ctrl'
+        elif key == 'CtrlR':
+            return 'Ctrl' if not is_pressed else 'Ctrl'
+        
         # Check if this is a letter key (A-Z) and auto-generate alternatives
         if key in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz':
             key_upper = key.upper()
