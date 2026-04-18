@@ -13,13 +13,23 @@ try:
 except ImportError:
     Controller = None
 
+# Try to import evdev for true input blocking (requires sudo)
+try:
+    import evdev
+    from evdev import InputDevice, categorize, ecodes
+    EVDEV_AVAILABLE = True
+except ImportError:
+    EVDEV_AVAILABLE = False
+
 class KeyboardVisualizer:
-    def __init__(self, config_path='keyboard_config.json'):
+    def __init__(self, config_path='keyboard_config.json', use_evdev=False):
         self.config = self.load_config(config_path)
         self.pressed_keys = {}  # Now stores key -> actual output character
         self.modifier_keys = set()  # Track shift, ctrl, etc
         self.lock = threading.Lock()
         self.running = True
+        self.use_evdev = use_evdev and EVDEV_AVAILABLE
+        self.keyboard_device = None
         
     def load_config(self, path):
         """Load keyboard layout configuration from JSON file"""
@@ -207,6 +217,136 @@ class KeyboardVisualizer:
         with self.lock:
             self.pressed_keys.pop(normalized, None)
     
+    def find_keyboard_device(self):
+        """Find keyboard input device for evdev"""
+        if not EVDEV_AVAILABLE:
+            return None
+        
+        devices = [InputDevice(path) for path in evdev.list_devices()]
+        for device in devices:
+            # Look for a device with keyboard capabilities
+            capabilities = device.capabilities()
+            if ecodes.EV_KEY in capabilities:
+                # Check if it has typical keyboard keys
+                keys = capabilities[ecodes.EV_KEY]
+                if ecodes.KEY_Q in keys and ecodes.KEY_A in keys:
+                    print(f"Using keyboard device: {device.name} ({device.path})")
+                    return device
+        return None
+    
+    def normalize_evdev_key(self, event):
+        """Normalize evdev key event - returns (normalized_name, actual_output)"""
+        keycode = event.code
+        
+        # Map evdev keycodes to our key names
+        evdev_map = {
+            ecodes.KEY_ESC: ('Esc', 'Esc'),
+            ecodes.KEY_1: ('1', '!') if 'Shift' in self.modifier_keys else ('1', '1'),
+            ecodes.KEY_2: ('2', '@') if 'Shift' in self.modifier_keys else ('2', '2'),
+            ecodes.KEY_3: ('3', '#') if 'Shift' in self.modifier_keys else ('3', '3'),
+            ecodes.KEY_4: ('4', '$') if 'Shift' in self.modifier_keys else ('4', '4'),
+            ecodes.KEY_5: ('5', '%') if 'Shift' in self.modifier_keys else ('5', '5'),
+            ecodes.KEY_6: ('6', '^') if 'Shift' in self.modifier_keys else ('6', '6'),
+            ecodes.KEY_7: ('7', '&') if 'Shift' in self.modifier_keys else ('7', '7'),
+            ecodes.KEY_8: ('8', '*') if 'Shift' in self.modifier_keys else ('8', '8'),
+            ecodes.KEY_9: ('9', '(') if 'Shift' in self.modifier_keys else ('9', '9'),
+            ecodes.KEY_0: ('0', ')') if 'Shift' in self.modifier_keys else ('0', '0'),
+            ecodes.KEY_MINUS: ('-', '_') if 'Shift' in self.modifier_keys else ('-', '-'),
+            ecodes.KEY_EQUAL: ('=', '+') if 'Shift' in self.modifier_keys else ('=', '='),
+            ecodes.KEY_BACKSPACE: ('Backspace', 'Backspace'),
+            ecodes.KEY_TAB: ('Tab', 'Tab'),
+            ecodes.KEY_ENTER: ('Enter', 'Enter'),
+            ecodes.KEY_LEFTCTRL: ('Ctrl', 'Ctrl'),
+            ecodes.KEY_RIGHTCTRL: ('Ctrl', 'Ctrl'),
+            ecodes.KEY_LEFTSHIFT: ('Shift', 'Shift'),
+            ecodes.KEY_RIGHTSHIFT: ('Shift', 'Shift'),
+            ecodes.KEY_LEFTALT: ('Alt', 'Alt'),
+            ecodes.KEY_RIGHTALT: ('Alt', 'Alt'),
+            ecodes.KEY_LEFTMETA: ('Win', 'Win'),
+            ecodes.KEY_RIGHTMETA: ('Win', 'Win'),
+            ecodes.KEY_SPACE: ('Space', ' '),
+            ecodes.KEY_CAPSLOCK: ('Caps', 'Caps'),
+            ecodes.KEY_GRAVE: ('`', '~') if 'Shift' in self.modifier_keys else ('`', '`'),
+            ecodes.KEY_LEFTBRACE: ('[', '{') if 'Shift' in self.modifier_keys else ('[', '['),
+            ecodes.KEY_RIGHTBRACE: (']', '}') if 'Shift' in self.modifier_keys else (']', ']'),
+            ecodes.KEY_BACKSLASH: ('\\', '|') if 'Shift' in self.modifier_keys else ('\\', '\\'),
+            ecodes.KEY_SEMICOLON: (';', ':') if 'Shift' in self.modifier_keys else (';', ';'),
+            ecodes.KEY_APOSTROPHE: ("'", '"') if 'Shift' in self.modifier_keys else ("'", "'"),
+            ecodes.KEY_COMMA: (',', '<') if 'Shift' in self.modifier_keys else (',', ','),
+            ecodes.KEY_DOT: ('.', '>') if 'Shift' in self.modifier_keys else ('.', '.'),
+            ecodes.KEY_SLASH: ('/', '?') if 'Shift' in self.modifier_keys else ('/', '/'),
+        }
+        
+        # Add F-keys
+        for i in range(1, 13):
+            fkey = getattr(ecodes, f'KEY_F{i}')
+            evdev_map[fkey] = (f'F{i}', f'F{i}')
+        
+        # Add letter keys
+        for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+            key_code = getattr(ecodes, f'KEY_{letter}')
+            if 'Shift' in self.modifier_keys:
+                evdev_map[key_code] = (letter, letter)
+            else:
+                evdev_map[key_code] = (letter, letter.lower())
+        
+        return evdev_map.get(keycode, (f'Key{keycode}', f'Key{keycode}'))
+    
+    def evdev_loop(self):
+        """Event loop for evdev input grabbing"""
+        self.keyboard_device = self.find_keyboard_device()
+        if not self.keyboard_device:
+            print("Error: No keyboard device found!")
+            self.running = False
+            return
+        
+        # Grab the device to block input
+        try:
+            self.keyboard_device.grab()
+            print(f"Grabbed keyboard device - input is now blocked (except 'q' to quit)")
+        except Exception as e:
+            print(f"Error grabbing device (are you running with sudo?): {e}")
+            self.running = False
+            return
+        
+        try:
+            for event in self.keyboard_device.read_loop():
+                if not self.running:
+                    break
+                
+                if event.type == ecodes.EV_KEY:
+                    key_event = categorize(event)
+                    
+                    # Check for 'q' to quit
+                    if event.code == ecodes.KEY_Q and event.value == 1:  # Key down
+                        self.running = False
+                        break
+                    
+                    normalized, actual_output = self.normalize_evdev_key(event)
+                    
+                    if event.value == 1:  # Key down
+                        # Track modifier keys
+                        if normalized in ['Shift', 'Ctrl', 'Alt', 'Win']:
+                            with self.lock:
+                                self.modifier_keys.add(normalized)
+                        
+                        with self.lock:
+                            self.pressed_keys[normalized] = actual_output
+                    
+                    elif event.value == 0:  # Key up
+                        # Remove modifier keys
+                        if normalized in ['Shift', 'Ctrl', 'Alt', 'Win']:
+                            with self.lock:
+                                self.modifier_keys.discard(normalized)
+                        
+                        with self.lock:
+                            self.pressed_keys.pop(normalized, None)
+        
+        finally:
+            if self.keyboard_device:
+                self.keyboard_device.ungrab()
+                print("\nReleased keyboard device")
+    
     def render_loop(self):
         """Continuous rendering loop"""
         while self.running:
@@ -219,20 +359,49 @@ class KeyboardVisualizer:
         render_thread = threading.Thread(target=self.render_loop, daemon=True)
         render_thread.start()
         
-        # Start keyboard listener
-        with keyboard.Listener(
-            on_press=self.on_press,
-            on_release=self.on_release) as listener:
-            listener.join()
+        if self.use_evdev:
+            # Use evdev for true input blocking
+            print("Running with evdev (true input blocking enabled)")
+            self.evdev_loop()
+        else:
+            # Use pynput (no true blocking)
+            if EVDEV_AVAILABLE and os.geteuid() == 0:
+                print("Running as root but evdev not enabled. Use --evdev flag for true blocking.")
+            elif EVDEV_AVAILABLE:
+                print("Running with pynput (no input blocking). Run with sudo and --evdev for true blocking.")
+            else:
+                print("Running with pynput (evdev not available). Install python-evdev for true blocking.")
+            
+            # Start keyboard listener
+            with keyboard.Listener(
+                on_press=self.on_press,
+                on_release=self.on_release) as listener:
+                listener.join()
         
         print("\nExiting...")
 
 def main():
-    config_file = 'keyboard_config.json'
-    if len(sys.argv) > 1:
-        config_file = sys.argv[1]
+    import argparse
     
-    visualizer = KeyboardVisualizer(config_file)
+    parser = argparse.ArgumentParser(description='Keyboard Visualizer - Display keyboard presses in real-time')
+    parser.add_argument('config', nargs='?', default='keyboard_config.json',
+                        help='Path to keyboard configuration JSON file (default: keyboard_config.json)')
+    parser.add_argument('--evdev', action='store_true',
+                        help='Use evdev for true input blocking (requires sudo on Linux)')
+    
+    args = parser.parse_args()
+    
+    # Check if running as root when evdev is requested
+    if args.evdev and not EVDEV_AVAILABLE:
+        print("Error: evdev is not available. Install with: pip install evdev")
+        sys.exit(1)
+    
+    if args.evdev and os.geteuid() != 0:
+        print("Warning: --evdev requires root permissions. Please run with sudo.")
+        print("Falling back to pynput mode...")
+        args.evdev = False
+    
+    visualizer = KeyboardVisualizer(args.config, use_evdev=args.evdev)
     visualizer.run()
 
 if __name__ == '__main__':

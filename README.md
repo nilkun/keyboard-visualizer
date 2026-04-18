@@ -36,7 +36,17 @@ Run with custom configuration:
 python3 keyboard_visualizer.py my_custom_config.json
 ```
 
-Press **q** to quit the visualizer. All keyboard input is blocked from passing through to other applications while the visualizer is running.
+**True Input Blocking (Linux only):**
+
+For complete keyboard input blocking (prevents keys from reaching other applications), run with sudo and the `--evdev` flag:
+
+```bash
+sudo python3 keyboard_visualizer.py --evdev
+```
+
+This requires the `evdev` library and root permissions to grab the keyboard device.
+
+Press **q** to quit the visualizer.
 
 ## Configuration
 
@@ -94,12 +104,17 @@ You can create different layouts for different keyboard types:
 - Python 3.6+
 - pynput library
 - Terminal with Unicode support
+- evdev library (Linux only, optional - for true input blocking)
 
 ## Troubleshooting
 
-**Permissions Error**: On Linux, you may need to run with appropriate permissions to capture keyboard events, or add your user to the `input` group.
+**Permissions Error**: On Linux with `--evdev` flag, you need to run with sudo to grab keyboard devices.
 
 **Keys not displaying**: Make sure the key names in your config match the normalized key names used by the program (check the key mapping in the code).
+
+**Input not being blocked**: By default (without `--evdev`), the visualizer uses pynput which doesn't block input on all systems. Use `sudo python3 keyboard_visualizer.py --evdev` on Linux for true input blocking.
+
+**Multiple keyboards**: If you have multiple keyboard devices, the tool will auto-select the first one it finds with standard keyboard keys.
 
 ## License
 
