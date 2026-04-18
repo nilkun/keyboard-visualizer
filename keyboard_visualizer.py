@@ -521,9 +521,9 @@ class KeyboardVisualizer:
         for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
             key_code = getattr(ecodes, f'KEY_{letter}')
             if 'Shift' in self.modifier_keys:
-                evdev_map[key_code] = (letter, letter)
+                evdev_map[key_code] = (letter.lower(), letter)  # lowercase key name, uppercase output
             else:
-                evdev_map[key_code] = (letter, letter.lower())
+                evdev_map[key_code] = (letter.lower(), letter.lower())  # lowercase key name, lowercase output
         
         return evdev_map.get(keycode, (f'Key{keycode}', f'Key{keycode}'))
     
