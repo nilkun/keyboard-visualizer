@@ -64,12 +64,31 @@ The `layout` array defines the keyboard structure. Each sub-array represents a r
 
 ### Appearance Options
 
-- **key_width**: Base width of each key (default: 5)
+- **default_key_width**: Default width for all keys (default: 5)
+- **key_widths**: Override width for specific keys (see below)
 - **highlight_char**: Character used to fill pressed keys (default: "█")
 - **normal_char**: Character used to fill unpressed keys (default: "░")
 - **border_char**: Character used for borders (default: "─")
 - **highlight_color**: Default color for pressed keys (default: "orange")
   - Available colors: orange, red, green, yellow, blue, magenta, cyan, white, bright_red, bright_green, bright_yellow, bright_blue, bright_magenta, bright_cyan, purple, pink, lime, teal, gold, gray, light_gray
+
+### Custom Key Widths
+
+You can set a custom width for specific keys with the `key_widths` object:
+
+```json
+"default_key_width": 5,
+"key_widths": {
+  "Space": 20,
+  "Enter": 8,
+  "Backspace": 9,
+  "Shift": 8,
+  "Tab": 6,
+  "Caps": 6
+}
+```
+
+All keys will use `default_key_width` unless specified in `key_widths`.
 
 ### Custom Key Labels
 
@@ -116,10 +135,11 @@ Override the default highlight color for specific keys:
 
 ### Example Custom Configuration
 
-See `keyboard_config_example.json` for a gaming keyboard setup with custom labels and colors:
+See `keyboard_config_example.json` for a gaming keyboard setup with:
 - WASD keys with custom symbols and green color
-- Space bar with multi-colored "JUMP" text
+- Space bar with multi-colored "JUMP" text and custom width (20)
 - Special Unicode symbols for modifier keys
+- Custom widths for larger keys (Enter, Backspace, Shift)
 - Custom colors per key
 
 You can also create minimal layouts:
@@ -130,7 +150,8 @@ You can also create minimal layouts:
     ["A", "S", "D", "F", "G", "H"],
     ["Z", "X", "C", "V", "B", "N"]
   ],
-  "key_width": 4,
+  "default_key_width": 4,
+  "key_widths": {},
   "highlight_char": "▓",
   "normal_char": "░",
   "border_char": "═",

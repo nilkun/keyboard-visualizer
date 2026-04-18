@@ -50,7 +50,8 @@ class KeyboardVisualizer:
                 ["Shift", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "/", "Shift"],
                 ["Ctrl", "Win", "Alt", "Space", "Alt", "Fn", "Ctrl"]
             ],
-            "key_width": 5,
+            "default_key_width": 5,
+            "key_widths": {},
             "highlight_char": "█",
             "normal_char": "░",
             "border_char": "─",
@@ -168,7 +169,9 @@ class KeyboardVisualizer:
         """Render the keyboard layout with highlighted pressed keys"""
         config = self.config
         layout = config['layout']
-        width = config['key_width']
+        # Support both old 'key_width' and new 'default_key_width'
+        default_width = config.get('default_key_width', config.get('key_width', 5))
+        key_widths = config.get('key_widths', {})
         highlight = config['highlight_char']
         normal = config['normal_char']
         border = config['border_char']
@@ -206,12 +209,8 @@ class KeyboardVisualizer:
                 
                 key_reset = reset if is_pressed else ""
                 
-                # Adjust key width based on key name
-                key_display_width = width
-                if key in ["Backspace", "Enter", "Shift", "Space"]:
-                    key_display_width = width + 2
-                elif key == "Tab" or key == "Caps":
-                    key_display_width = width + 1
+                # Get key width - custom width or default
+                key_display_width = key_widths.get(key, default_width)
                 
                 # Calculate visual length (excluding color codes)
                 visual_text = display_text

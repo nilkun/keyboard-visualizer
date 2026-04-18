@@ -7,7 +7,18 @@
     ["Shift", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "/", "Shift"],
     ["Ctrl", "Win", "Alt", "Space", "Alt", "Fn", "Ctrl"]
   ],
-  "key_width": 5,
+  "default_key_width": 5,
+  "key_widths": {
+    "Backspace": 9,
+    "Tab": 6,
+    "Caps": 6,
+    "Enter": 8,
+    "Shift": 8,
+    "Space": 20,
+    "Ctrl": 5,
+    "Alt": 5,
+    "Win": 5
+  },
   "highlight_char": "█",
   "normal_char": "░",
   "border_char": "─",
