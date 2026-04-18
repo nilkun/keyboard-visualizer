@@ -54,7 +54,9 @@ class KeyboardVisualizer:
             "highlight_char": "█",
             "normal_char": "░",
             "border_char": "─",
-            "highlight_color": "orange"
+            "highlight_color": "orange",
+            "key_labels": {},
+            "key_colors": {}
         }
     
     def normalize_key(self, key):
@@ -114,8 +116,53 @@ class KeyboardVisualizer:
             'bright_blue': '\033[38;5;21m',
             'bright_magenta': '\033[38;5;201m',
             'bright_cyan': '\033[38;5;51m',
+            'purple': '\033[38;5;129m',
+            'pink': '\033[38;5;213m',
+            'lime': '\033[38;5;118m',
+            'teal': '\033[38;5;37m',
+            'gold': '\033[38;5;220m',
+            'gray': '\033[90m',
+            'light_gray': '\033[37m',
         }
         return colors.get(color_name.lower(), '\033[38;5;208m')  # Default to orange
+    
+    def parse_colored_text(self, text):
+        """Parse text with color tags like 'W{red}A{blue}S{green}D' 
+        Returns list of (char, color) tuples"""
+        result = []
+        i = 0
+        current_color = None
+        
+        while i < len(text):
+            if text[i] == '{' and i > 0:
+                # Find closing brace
+                end = text.find('}', i)
+                if end != -1:
+                    color = text[i+1:end]
+                    current_color = color
+                    i = end + 1
+                    continue
+            
+            result.append((text[i], current_color))
+            i += 1
+        
+        return result
+    
+    def render_colored_text(self, text, default_color=None):
+        """Render text with embedded color codes"""
+        parsed = self.parse_colored_text(text)
+        result = []
+        reset = '\033[0m'
+        
+        for char, color in parsed:
+            if color:
+                result.append(self.get_color_code(color) + char + reset)
+            elif default_color:
+                result.append(default_color + char + reset)
+            else:
+                result.append(char)
+        
+        return ''.join(result)
     
     def render_keyboard(self):
         """Render the keyboard layout with highlighted pressed keys"""
@@ -125,7 +172,9 @@ class KeyboardVisualizer:
         highlight = config['highlight_char']
         normal = config['normal_char']
         border = config['border_char']
-        color = self.get_color_code(config.get('highlight_color', 'orange'))
+        default_highlight_color = self.get_color_code(config.get('highlight_color', 'orange'))
+        key_labels = config.get('key_labels', {})
+        key_colors = config.get('key_colors', {})
         reset = '\033[0m'
         
         output = []
@@ -146,8 +195,15 @@ class KeyboardVisualizer:
                 actual_char = pressed.get(key, key) if is_pressed else key
                 char = highlight if is_pressed else normal
                 
-                # Apply color to pressed keys
-                key_color = color if is_pressed else ""
+                # Get custom label if defined
+                display_text = key_labels.get(key, key if not is_pressed else actual_char)
+                
+                # Get custom color for this key (or use default)
+                if is_pressed:
+                    key_color = self.get_color_code(key_colors.get(key, config.get('highlight_color', 'orange')))
+                else:
+                    key_color = ""
+                
                 key_reset = reset if is_pressed else ""
                 
                 # Adjust key width based on key name
@@ -157,16 +213,26 @@ class KeyboardVisualizer:
                 elif key == "Tab" or key == "Caps":
                     key_display_width = width + 1
                 
-                # Display actual output character for pressed keys
-                display_text = actual_char if is_pressed else key
+                # Calculate visual length (excluding color codes)
+                visual_text = display_text
+                # Remove color codes from length calculation
+                import re
+                visual_length = len(re.sub(r'\{[^}]+\}', '', visual_text))
                 
                 # Create key representation
-                padding = key_display_width - len(display_text)
+                padding = key_display_width - visual_length
                 left_pad = padding // 2
                 right_pad = padding - left_pad
                 
                 line_top += key_color + "┌" + (char * key_display_width) + "┐" + key_reset
-                line_mid += key_color + "│" + (" " * left_pad) + display_text + (" " * right_pad) + "│" + key_reset
+                
+                # Render colored text if it has color tags
+                if '{' in display_text and '}' in display_text:
+                    rendered_text = self.render_colored_text(display_text, key_color if is_pressed else None)
+                    line_mid += key_color + "│" + reset + (" " * left_pad) + rendered_text + (" " * right_pad) + key_color + "│" + key_reset
+                else:
+                    line_mid += key_color + "│" + (" " * left_pad) + display_text + (" " * right_pad) + "│" + key_reset
+                
                 line_bot += key_color + "└" + (char * key_display_width) + "┘" + key_reset
             
             output.append(line_top + "\n")

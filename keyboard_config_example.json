@@ -12,6 +12,25 @@
   "normal_char": "░",
   "border_char": "─",
   "highlight_color": "orange",
-  "key_labels": {},
-  "key_colors": {}
+  "key_labels": {
+    "W": "W{red}A{blue}S{green}D",
+    "A": "←",
+    "S": "↓",
+    "D": "→",
+    "Space": "J{cyan}U{magenta}M{yellow}P",
+    "Enter": "⏎",
+    "Backspace": "⌫",
+    "Shift": "⇧",
+    "Ctrl": "^",
+    "Alt": "⎇"
+  },
+  "key_colors": {
+    "W": "bright_green",
+    "A": "bright_green",
+    "S": "bright_green",
+    "D": "bright_green",
+    "Space": "bright_cyan",
+    "Enter": "bright_yellow",
+    "Q": "bright_red"
+  }
 }

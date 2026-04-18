@@ -68,12 +68,61 @@ The `layout` array defines the keyboard structure. Each sub-array represents a r
 - **highlight_char**: Character used to fill pressed keys (default: "█")
 - **normal_char**: Character used to fill unpressed keys (default: "░")
 - **border_char**: Character used for borders (default: "─")
-- **highlight_color**: Color for pressed keys (default: "orange")
-  - Available colors: orange, red, green, yellow, blue, magenta, cyan, white, bright_red, bright_green, bright_yellow, bright_blue, bright_magenta, bright_cyan
+- **highlight_color**: Default color for pressed keys (default: "orange")
+  - Available colors: orange, red, green, yellow, blue, magenta, cyan, white, bright_red, bright_green, bright_yellow, bright_blue, bright_magenta, bright_cyan, purple, pink, lime, teal, gold, gray, light_gray
+
+### Custom Key Labels
+
+You can customize how keys are displayed with the `key_labels` object:
+
+```json
+"key_labels": {
+  "W": "UP",
+  "A": "←",
+  "S": "↓",
+  "D": "→",
+  "Space": "JUMP",
+  "Enter": "⏎"
+}
+```
+
+### Multi-Color Key Labels
+
+Add colors to individual characters within a key label using color tags:
+
+```json
+"key_labels": {
+  "W": "W{red}A{blue}S{green}D",
+  "Space": "J{cyan}U{magenta}M{yellow}P"
+}
+```
+
+Each character can have its own color by adding `{colorname}` after it.
+
+### Per-Key Colors
+
+Override the default highlight color for specific keys:
+
+```json
+"key_colors": {
+  "W": "bright_green",
+  "A": "bright_green",
+  "S": "bright_green",
+  "D": "bright_green",
+  "Space": "bright_cyan",
+  "Q": "bright_red"
+}
+```
 
 ### Example Custom Configuration
 
-Create a minimal layout with custom colors:
+See `keyboard_config_example.json` for a gaming keyboard setup with custom labels and colors:
+- WASD keys with custom symbols and green color
+- Space bar with multi-colored "JUMP" text
+- Special Unicode symbols for modifier keys
+- Custom colors per key
+
+You can also create minimal layouts:
 ```json
 {
   "layout": [
@@ -85,7 +134,19 @@ Create a minimal layout with custom colors:
   "highlight_char": "▓",
   "normal_char": "░",
   "border_char": "═",
-  "highlight_color": "bright_cyan"
+  "highlight_color": "bright_cyan",
+  "key_labels": {
+    "W": "↑",
+    "A": "←",
+    "S": "↓",
+    "D": "→"
+  },
+  "key_colors": {
+    "W": "bright_green",
+    "A": "bright_green",
+    "S": "bright_green",
+    "D": "bright_green"
+  }
 }
 ```
 
