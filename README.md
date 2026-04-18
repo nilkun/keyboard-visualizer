@@ -77,18 +77,20 @@ The `layout` array defines the keyboard structure. Each sub-array represents a r
 Control how keys are displayed with the `display_mode` option:
 
 **`"base"`** (default) - Shows base character, switches to alternative when modifier is pressed
-- Without Shift: shows `4`
-- With Shift: shows `$`
+- Letter keys show lowercase by default: `a`, `w`, `s`, `d`
+- With Shift: shows uppercase: `A`, `W`, `S`, `D`
+- Number keys (if alternatives defined): `4` becomes `$` with Shift
 - When pressed: shows actual output character
 
 **`"all"`** - Shows all possible characters on each key, highlights the active one
-- Shows: `$4` (shift char dimmed, base char normal)
-- With Shift pressed: shows `$4` (shift char highlighted, base char dimmed)
+- Letter keys: Shows `Aa` (uppercase dimmed, lowercase normal)
+- With Shift pressed: Shows `Aa` (uppercase highlighted, lowercase dimmed)
+- Number keys: Shows `!1`, `$4`, etc.
 - Perfect for learning keyboard layouts
 
 **`"alternative"`** - Only shows alternative characters when modifier is pressed
-- Without Shift: shows `4`
-- With Shift: shows `$`
+- Without Shift: shows `a`, `4`
+- With Shift: shows `A`, `$`
 
 ### Key Alternatives
 
@@ -103,6 +105,15 @@ Define alternative characters for keys with modifiers using `key_alternatives`:
   "[": {"base": "[", "shift": "{", "alt": "«"}
 }
 ```
+
+**Note:** Letter keys (A-Z) automatically have lowercase/uppercase alternatives! You don't need to define them unless you want custom behavior. For example:
+- `Q` automatically shows `q` (base) and `Q` (shift)
+- `A` automatically shows `a` (base) and `A` (shift)
+
+Only define alternatives for:
+- Number keys and symbols
+- Keys with Alt or Ctrl modifiers
+- Custom behaviors
 
 Supports modifiers:
 - `base` - Default character
@@ -223,10 +234,12 @@ You can create different layouts for different keyboard types:
 ### Japanese Keyboard Example
 
 See `keyboard_config_japanese.json` for a Japanese keyboard layout with:
-- All key alternatives defined (Shift produces different symbols)
+- All number/symbol key alternatives defined (Shift produces different symbols)
+- Letter keys automatically show `a`→`A` with Shift (no config needed!)
 - `display_mode: "all"` to show both characters on each key
 - Active character highlighted based on modifier state
 - Example: `4` shows as `$4` with `$` highlighted when Shift is pressed
+- Example: `w` shows as `Ww` with `W` highlighted when Shift is pressed
 
 ## Requirements
 
