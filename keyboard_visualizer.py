@@ -538,7 +538,7 @@ class KeyboardVisualizer:
         # Grab the device to block input
         try:
             self.keyboard_device.grab()
-            print(f"Grabbed keyboard device - input is now blocked (except 'q' to quit)")
+            print(f"Grabbed keyboard device - input is now blocked (press 'q' to quit, or Ctrl+C)")
         except Exception as e:
             print(f"Error grabbing device (are you running with sudo?): {e}")
             self.running = False
@@ -556,6 +556,12 @@ class KeyboardVisualizer:
                     if event.code == ecodes.KEY_Q and event.value == 1:  # Key down
                         self.running = False
                         break
+                    
+                    # Check for Ctrl+C to quit
+                    if event.code == ecodes.KEY_C and event.value == 1:
+                        if 'CtrlL' in self.modifier_keys or 'CtrlR' in self.modifier_keys or 'Ctrl' in self.modifier_keys:
+                            self.running = False
+                            break
                     
                     normalized, actual_output = self.normalize_evdev_key(event)
                     
@@ -594,10 +600,13 @@ class KeyboardVisualizer:
                             self.pressed_keys.pop(normalized, None)
                             self.needs_render = True
         
+        except KeyboardInterrupt:
+            print("\nReceived Ctrl+C, exiting...")
+            self.running = False
         finally:
             if self.keyboard_device:
                 self.keyboard_device.ungrab()
-                print("\nReleased keyboard device")
+                print("Released keyboard device")
     
     def render_loop(self):
         """Continuous rendering loop"""
