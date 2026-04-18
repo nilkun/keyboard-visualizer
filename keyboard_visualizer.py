@@ -79,11 +79,11 @@ class KeyboardVisualizer:
                     'backspace': 'Backspace',
                     'esc': 'Esc',
                     'shift': 'Shift',
-                    'shift_l': 'Shift',
-                    'shift_r': 'Shift',
+                    'shift_l': 'ShiftL',  # Left Shift
+                    'shift_r': 'ShiftR',  # Right Shift
                     'ctrl': 'Ctrl',
-                    'ctrl_l': 'Ctrl',
-                    'ctrl_r': 'Ctrl',
+                    'ctrl_l': 'CtrlL',
+                    'ctrl_r': 'CtrlR',
                     'alt': 'Alt',
                     'alt_l': 'Alt',
                     'alt_r': 'AltGr',  # Right Alt is AltGr on many keyboards
@@ -361,11 +361,34 @@ class KeyboardVisualizer:
         output.append(border * 80 + "\n")
         
         # Show actual output characters
+        output.append("Output: ")
+        
+        # Collect non-modifier keys that would produce output
+        output_chars = []
+        for k, v in sorted(pressed.items()):
+            # Skip modifier keys and special keys
+            if k not in ['Shift', 'ShiftL', 'ShiftR', 'Ctrl', 'CtrlL', 'CtrlR', 
+                         'Alt', 'AltGr', 'Win', 'Caps', 'Tab', 'Enter', 
+                         'Backspace', 'Esc', 'Fn']:
+                output_chars.append(v)
+        
+        if output_chars:
+            output.append(f"'{' '.join(output_chars)}'\n")
+        else:
+            output.append("(none)\n")
+        
+        # Show pressed keys with their output
         if pressed:
             outputs = [f"{k}='{v}'" for k, v in sorted(pressed.items())]
-            output.append(f"Pressed keys: {', '.join(outputs)}\n")
+            output.append(f"Pressed: {', '.join(outputs)}\n")
         else:
-            output.append("Pressed keys: None\n")
+            output.append("Pressed: None\n")
+        
+        # Show active modifiers
+        with self.lock:
+            mods = self.modifier_keys.copy()
+        if mods:
+            output.append(f"Modifiers: {', '.join(sorted(mods))}\n")
         
         sys.stdout.write(''.join(output))
         sys.stdout.flush()
@@ -382,10 +405,15 @@ class KeyboardVisualizer:
         
         normalized, actual_output = self.normalize_key(key)
         
-        # Track modifier keys
-        if normalized in ['Shift', 'Ctrl', 'Alt', 'AltGr', 'Win']:
+        # Track modifier keys (including left/right variants)
+        if normalized in ['Shift', 'ShiftL', 'ShiftR', 'Ctrl', 'CtrlL', 'CtrlR', 'Alt', 'AltGr', 'Win']:
             with self.lock:
                 self.modifier_keys.add(normalized)
+                # Also add generic modifier for compatibility
+                if normalized in ['ShiftL', 'ShiftR']:
+                    self.modifier_keys.add('Shift')
+                elif normalized in ['CtrlL', 'CtrlR']:
+                    self.modifier_keys.add('Ctrl')
                 self.needs_render = True
         
         with self.lock:
@@ -396,10 +424,18 @@ class KeyboardVisualizer:
         """Handle key release event"""
         normalized, _ = self.normalize_key(key)
         
-        # Remove modifier keys
-        if normalized in ['Shift', 'Ctrl', 'Alt', 'AltGr', 'Win']:
+        # Remove modifier keys (including left/right variants)
+        if normalized in ['Shift', 'ShiftL', 'ShiftR', 'Ctrl', 'CtrlL', 'CtrlR', 'Alt', 'AltGr', 'Win']:
             with self.lock:
                 self.modifier_keys.discard(normalized)
+                # Also remove generic modifier
+                if normalized in ['ShiftL', 'ShiftR']:
+                    # Only remove 'Shift' if both left and right are released
+                    if 'ShiftL' not in self.modifier_keys and 'ShiftR' not in self.modifier_keys:
+                        self.modifier_keys.discard('Shift')
+                elif normalized in ['CtrlL', 'CtrlR']:
+                    if 'CtrlL' not in self.modifier_keys and 'CtrlR' not in self.modifier_keys:
+                        self.modifier_keys.discard('Ctrl')
                 self.needs_render = True
         
         with self.lock:
@@ -515,9 +551,14 @@ class KeyboardVisualizer:
                     
                     if event.value == 1:  # Key down
                         # Track modifier keys
-                        if normalized in ['Shift', 'Ctrl', 'Alt', 'AltGr', 'Win']:
+                        if normalized in ['Shift', 'ShiftL', 'ShiftR', 'Ctrl', 'CtrlL', 'CtrlR', 'Alt', 'AltGr', 'Win']:
                             with self.lock:
                                 self.modifier_keys.add(normalized)
+                                # Also add generic modifier for compatibility
+                                if normalized in ['ShiftL', 'ShiftR']:
+                                    self.modifier_keys.add('Shift')
+                                elif normalized in ['CtrlL', 'CtrlR']:
+                                    self.modifier_keys.add('Ctrl')
                                 self.needs_render = True
                         
                         with self.lock:
@@ -526,9 +567,17 @@ class KeyboardVisualizer:
                     
                     elif event.value == 0:  # Key up
                         # Remove modifier keys
-                        if normalized in ['Shift', 'Ctrl', 'Alt', 'AltGr', 'Win']:
+                        if normalized in ['Shift', 'ShiftL', 'ShiftR', 'Ctrl', 'CtrlL', 'CtrlR', 'Alt', 'AltGr', 'Win']:
                             with self.lock:
                                 self.modifier_keys.discard(normalized)
+                                # Also remove generic modifier
+                                if normalized in ['ShiftL', 'ShiftR']:
+                                    # Only remove 'Shift' if both left and right are released
+                                    if 'ShiftL' not in self.modifier_keys and 'ShiftR' not in self.modifier_keys:
+                                        self.modifier_keys.discard('Shift')
+                                elif normalized in ['CtrlL', 'CtrlR']:
+                                    if 'CtrlL' not in self.modifier_keys and 'CtrlR' not in self.modifier_keys:
+                                        self.modifier_keys.discard('Ctrl')
                                 self.needs_render = True
                         
                         with self.lock:
