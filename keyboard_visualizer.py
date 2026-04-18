@@ -181,7 +181,7 @@ class KeyboardVisualizer:
         try:
             if hasattr(key, 'char') and key.char == 'q':
                 self.running = False
-                return False
+                return False  # Stop listener only when quitting
         except:
             pass
         
@@ -194,9 +194,6 @@ class KeyboardVisualizer:
         
         with self.lock:
             self.pressed_keys[normalized] = actual_output
-        
-        # Suppress all key events (block input from going further)
-        return False
     
     def on_release(self, key):
         """Handle key release event"""
@@ -209,9 +206,6 @@ class KeyboardVisualizer:
         
         with self.lock:
             self.pressed_keys.pop(normalized, None)
-        
-        # Suppress all key events
-        return False
     
     def render_loop(self):
         """Continuous rendering loop"""
