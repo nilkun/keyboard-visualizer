@@ -1,0 +1,48 @@
+{
+  "layout": [
+    ["Esc", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"],
+    ["`", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "Backspace"],
+    ["Tab", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "[", "]", "\\"],
+    ["Caps", "A", "S", "D", "F", "G", "H", "J", "K", "L", ";", "'", "Enter"],
+    ["Shift", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "/", "Shift"],
+    ["Ctrl", "Win", "Alt", "Space", "Alt", "Fn", "Ctrl"]
+  ],
+  "default_key_width": 5,
+  "key_widths": {
+    "Backspace": 9,
+    "Tab": 6,
+    "Caps": 6,
+    "Enter": 8,
+    "Shift": 8,
+    "Space": 20
+  },
+  "highlight_char": "█",
+  "normal_char": "░",
+  "border_char": "─",
+  "highlight_color": "orange",
+  "display_mode": "all",
+  "key_labels": {},
+  "key_colors": {},
+  "key_alternatives": {
+    "1": {"base": "1", "shift": "!"},
+    "2": {"base": "2", "shift": "\""},
+    "3": {"base": "3", "shift": "#"},
+    "4": {"base": "4", "shift": "$"},
+    "5": {"base": "5", "shift": "%"},
+    "6": {"base": "6", "shift": "&"},
+    "7": {"base": "7", "shift": "'"},
+    "8": {"base": "8", "shift": "("},
+    "9": {"base": "9", "shift": ")"},
+    "0": {"base": "0", "shift": "~"},
+    "-": {"base": "-", "shift": "="},
+    "=": {"base": "=", "shift": "+"},
+    "[": {"base": "[", "shift": "{"},
+    "]": {"base": "]", "shift": "}"},
+    ";": {"base": ";", "shift": "+"},
+    "'": {"base": "'", "shift": "*"},
+    ",": {"base": ",", "shift": "<"},
+    ".": {"base": ".", "shift": ">"},
+    "/": {"base": "/", "shift": "?"},
+    "`": {"base": "`", "shift": "~"}
+  }
+}

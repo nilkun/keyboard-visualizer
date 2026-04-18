@@ -72,6 +72,44 @@ The `layout` array defines the keyboard structure. Each sub-array represents a r
 - **highlight_color**: Default color for pressed keys (default: "orange")
   - Available colors: orange, red, green, yellow, blue, magenta, cyan, white, bright_red, bright_green, bright_yellow, bright_blue, bright_magenta, bright_cyan, purple, pink, lime, teal, gold, gray, light_gray
 
+### Display Modes
+
+Control how keys are displayed with the `display_mode` option:
+
+**`"base"`** (default) - Shows base character, switches to alternative when modifier is pressed
+- Without Shift: shows `4`
+- With Shift: shows `$`
+- When pressed: shows actual output character
+
+**`"all"`** - Shows all possible characters on each key, highlights the active one
+- Shows: `$4` (shift char dimmed, base char normal)
+- With Shift pressed: shows `$4` (shift char highlighted, base char dimmed)
+- Perfect for learning keyboard layouts
+
+**`"alternative"`** - Only shows alternative characters when modifier is pressed
+- Without Shift: shows `4`
+- With Shift: shows `$`
+
+### Key Alternatives
+
+Define alternative characters for keys with modifiers using `key_alternatives`:
+
+```json
+"display_mode": "all",
+"key_alternatives": {
+  "1": {"base": "1", "shift": "!"},
+  "2": {"base": "2", "shift": "@"},
+  "4": {"base": "4", "shift": "$"},
+  "[": {"base": "[", "shift": "{", "alt": "«"}
+}
+```
+
+Supports modifiers:
+- `base` - Default character
+- `shift` - With Shift pressed
+- `alt` - With Alt pressed
+- `ctrl` - With Ctrl pressed
+
 ### Custom Key Widths
 
 You can set a custom width for specific keys with the `key_widths` object:
@@ -175,11 +213,20 @@ You can also create minimal layouts:
 
 You can create different layouts for different keyboard types:
 
-- **QWERTY** (default)
+- **QWERTY** (default) - `keyboard_config.json`
+- **Gaming** - `keyboard_config_example.json` with WASD colors
+- **Japanese** - `keyboard_config_japanese.json` with Japanese layout alternatives
 - **DVORAK** - Rearrange keys in the layout array
-- **Gaming** - Create a focused layout with WASD, number keys, etc.
 - **60% keyboard** - Remove function keys and numpad
 - **Custom** - Any layout you want!
+
+### Japanese Keyboard Example
+
+See `keyboard_config_japanese.json` for a Japanese keyboard layout with:
+- All key alternatives defined (Shift produces different symbols)
+- `display_mode: "all"` to show both characters on each key
+- Active character highlighted based on modifier state
+- Example: `4` shows as `$4` with `$` highlighted when Shift is pressed
 
 ## Requirements
 

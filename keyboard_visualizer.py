@@ -57,7 +57,9 @@ class KeyboardVisualizer:
             "border_char": "─",
             "highlight_color": "orange",
             "key_labels": {},
-            "key_colors": {}
+            "key_colors": {},
+            "display_mode": "base",
+            "key_alternatives": {}
         }
     
     def normalize_key(self, key):
@@ -165,6 +167,86 @@ class KeyboardVisualizer:
         
         return ''.join(result)
     
+    def get_display_text_for_key(self, key, is_pressed, actual_char):
+        """Get the display text for a key based on display mode and modifier state"""
+        config = self.config
+        display_mode = config.get('display_mode', 'base')
+        key_alternatives = config.get('key_alternatives', {})
+        key_labels = config.get('key_labels', {})
+        
+        # If custom label is defined, use it
+        if key in key_labels:
+            return key_labels[key]
+        
+        # If pressed, return actual character for base mode
+        if is_pressed and display_mode == 'base':
+            return actual_char
+        
+        # For non-pressed keys or other modes, check alternatives
+        if key in key_alternatives:
+            alternatives = key_alternatives[key]
+            
+            if display_mode == 'base':
+                # Show base character, or alternative if modifier is pressed
+                if 'Shift' in self.modifier_keys and 'shift' in alternatives:
+                    return alternatives['shift']
+                elif 'Alt' in self.modifier_keys and 'alt' in alternatives:
+                    return alternatives.get('alt', alternatives.get('base', key))
+                elif 'Ctrl' in self.modifier_keys and 'ctrl' in alternatives:
+                    return alternatives.get('ctrl', alternatives.get('base', key))
+                else:
+                    return alternatives.get('base', key)
+            
+            elif display_mode == 'all':
+                # Show all alternatives with the active one highlighted
+                parts = []
+                base = alternatives.get('base', key)
+                shift = alternatives.get('shift', '')
+                alt = alternatives.get('alt', '')
+                
+                # Determine which is active
+                active = None
+                if is_pressed:
+                    active = actual_char
+                elif 'Shift' in self.modifier_keys and shift:
+                    active = shift
+                elif 'Alt' in self.modifier_keys and alt:
+                    active = alt
+                else:
+                    active = base
+                
+                # Build display string with highlighting
+                if shift:
+                    if shift == active:
+                        parts.append(f"{{{config.get('highlight_color', 'orange')}}}{shift}")
+                    else:
+                        parts.append(f"{{gray}}{shift}")
+                
+                if base == active:
+                    parts.append(f"{{{config.get('highlight_color', 'orange')}}}{base}")
+                else:
+                    parts.append(base)
+                
+                if alt:
+                    if alt == active:
+                        parts.append(f"{{{config.get('highlight_color', 'orange')}}}{alt}")
+                    else:
+                        parts.append(f"{{gray}}{alt}")
+                
+                return ''.join(parts)
+            
+            elif display_mode == 'alternative':
+                # Only show alternative when modifier is pressed
+                if 'Shift' in self.modifier_keys and 'shift' in alternatives:
+                    return alternatives['shift']
+                elif 'Alt' in self.modifier_keys and 'alt' in alternatives:
+                    return alternatives.get('alt', alternatives.get('base', key))
+                else:
+                    return alternatives.get('base', key)
+        
+        # Default: return actual char if pressed, otherwise key name
+        return actual_char if is_pressed else key
+    
     def render_keyboard(self):
         """Render the keyboard layout with highlighted pressed keys"""
         config = self.config
@@ -198,8 +280,8 @@ class KeyboardVisualizer:
                 actual_char = pressed.get(key, key) if is_pressed else key
                 char = highlight if is_pressed else normal
                 
-                # Get custom label if defined
-                display_text = key_labels.get(key, key if not is_pressed else actual_char)
+                # Get display text based on mode and modifier state
+                display_text = self.get_display_text_for_key(key, is_pressed, actual_char)
                 
                 # Get custom color for this key (or use default)
                 if is_pressed:

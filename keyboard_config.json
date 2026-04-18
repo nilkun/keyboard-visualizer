@@ -13,6 +13,8 @@
   "normal_char": "░",
   "border_char": "─",
   "highlight_color": "orange",
+  "display_mode": "base",
   "key_labels": {},
-  "key_colors": {}
+  "key_colors": {},
+  "key_alternatives": {}
 }
