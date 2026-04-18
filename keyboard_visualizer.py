@@ -86,7 +86,8 @@ class KeyboardVisualizer:
                     'ctrl_r': 'Ctrl',
                     'alt': 'Alt',
                     'alt_l': 'Alt',
-                    'alt_r': 'Alt',
+                    'alt_r': 'AltGr',  # Right Alt is AltGr on many keyboards
+                    'alt_gr': 'AltGr',
                     'caps_lock': 'Caps',
                     'cmd': 'Win',
                     'cmd_l': 'Win',
@@ -201,8 +202,7 @@ class KeyboardVisualizer:
                 # Priority: Shift > AltGr > Alt > Ctrl
                 if 'Shift' in self.modifier_keys and 'shift' in alternatives:
                     return alternatives['shift']
-                elif 'Alt' in self.modifier_keys and 'altgr' in alternatives:
-                    # AltGr is often Alt on right side
+                elif 'AltGr' in self.modifier_keys and 'altgr' in alternatives:
                     return alternatives['altgr']
                 elif 'Alt' in self.modifier_keys and 'alt' in alternatives:
                     return alternatives['alt']
@@ -226,6 +226,8 @@ class KeyboardVisualizer:
                     active = actual_char
                 elif 'Shift' in self.modifier_keys and shift:
                     active = shift
+                elif 'AltGr' in self.modifier_keys and altgr:
+                    active = altgr
                 elif 'Alt' in self.modifier_keys and alt:
                     active = alt
                 elif 'Ctrl' in self.modifier_keys and ctrl:
@@ -270,7 +272,7 @@ class KeyboardVisualizer:
                 # Only show alternative when modifier is pressed
                 if 'Shift' in self.modifier_keys and 'shift' in alternatives:
                     return alternatives['shift']
-                elif 'Alt' in self.modifier_keys and 'altgr' in alternatives:
+                elif 'AltGr' in self.modifier_keys and 'altgr' in alternatives:
                     return alternatives['altgr']
                 elif 'Alt' in self.modifier_keys and 'alt' in alternatives:
                     return alternatives['alt']
@@ -380,7 +382,7 @@ class KeyboardVisualizer:
         normalized, actual_output = self.normalize_key(key)
         
         # Track modifier keys
-        if normalized in ['Shift', 'Ctrl', 'Alt', 'Win']:
+        if normalized in ['Shift', 'Ctrl', 'Alt', 'AltGr', 'Win']:
             with self.lock:
                 self.modifier_keys.add(normalized)
                 self.needs_render = True
@@ -394,7 +396,7 @@ class KeyboardVisualizer:
         normalized, _ = self.normalize_key(key)
         
         # Remove modifier keys
-        if normalized in ['Shift', 'Ctrl', 'Alt', 'Win']:
+        if normalized in ['Shift', 'Ctrl', 'Alt', 'AltGr', 'Win']:
             with self.lock:
                 self.modifier_keys.discard(normalized)
                 self.needs_render = True
@@ -447,7 +449,7 @@ class KeyboardVisualizer:
             ecodes.KEY_LEFTSHIFT: ('Shift', 'Shift'),
             ecodes.KEY_RIGHTSHIFT: ('Shift', 'Shift'),
             ecodes.KEY_LEFTALT: ('Alt', 'Alt'),
-            ecodes.KEY_RIGHTALT: ('Alt', 'Alt'),
+            ecodes.KEY_RIGHTALT: ('AltGr', 'AltGr'),  # Right Alt is AltGr
             ecodes.KEY_LEFTMETA: ('Win', 'Win'),
             ecodes.KEY_RIGHTMETA: ('Win', 'Win'),
             ecodes.KEY_SPACE: ('Space', ' '),
@@ -512,7 +514,7 @@ class KeyboardVisualizer:
                     
                     if event.value == 1:  # Key down
                         # Track modifier keys
-                        if normalized in ['Shift', 'Ctrl', 'Alt', 'Win']:
+                        if normalized in ['Shift', 'Ctrl', 'Alt', 'AltGr', 'Win']:
                             with self.lock:
                                 self.modifier_keys.add(normalized)
                                 self.needs_render = True
@@ -523,7 +525,7 @@ class KeyboardVisualizer:
                     
                     elif event.value == 0:  # Key up
                         # Remove modifier keys
-                        if normalized in ['Shift', 'Ctrl', 'Alt', 'Win']:
+                        if normalized in ['Shift', 'Ctrl', 'Alt', 'AltGr', 'Win']:
                             with self.lock:
                                 self.modifier_keys.discard(normalized)
                                 self.needs_render = True
