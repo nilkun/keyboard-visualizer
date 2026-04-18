@@ -197,12 +197,16 @@ class KeyboardVisualizer:
             
             if display_mode == 'base':
                 # Show base character, or alternative if modifier is pressed
+                # Priority: Shift > AltGr > Alt > Ctrl
                 if 'Shift' in self.modifier_keys and 'shift' in alternatives:
                     return alternatives['shift']
+                elif 'Alt' in self.modifier_keys and 'altgr' in alternatives:
+                    # AltGr is often Alt on right side
+                    return alternatives['altgr']
                 elif 'Alt' in self.modifier_keys and 'alt' in alternatives:
-                    return alternatives.get('alt', alternatives.get('base', key))
+                    return alternatives['alt']
                 elif 'Ctrl' in self.modifier_keys and 'ctrl' in alternatives:
-                    return alternatives.get('ctrl', alternatives.get('base', key))
+                    return alternatives['ctrl']
                 else:
                     return alternatives.get('base', key)
             
@@ -212,6 +216,8 @@ class KeyboardVisualizer:
                 base = alternatives.get('base', key)
                 shift = alternatives.get('shift', '')
                 alt = alternatives.get('alt', '')
+                altgr = alternatives.get('altgr', '')
+                ctrl = alternatives.get('ctrl', '')
                 
                 # Determine which is active
                 active = None
@@ -221,10 +227,13 @@ class KeyboardVisualizer:
                     active = shift
                 elif 'Alt' in self.modifier_keys and alt:
                     active = alt
+                elif 'Ctrl' in self.modifier_keys and ctrl:
+                    active = ctrl
                 else:
                     active = base
                 
                 # Build display string with highlighting
+                # Order: Shift, Base, Alt, AltGr, Ctrl
                 if shift:
                     if shift == active:
                         parts.append(f"{{{config.get('highlight_color', 'orange')}}}{shift}")
@@ -242,14 +251,30 @@ class KeyboardVisualizer:
                     else:
                         parts.append(f"{{gray}}{alt}")
                 
+                if altgr:
+                    if altgr == active:
+                        parts.append(f"{{{config.get('highlight_color', 'orange')}}}{altgr}")
+                    else:
+                        parts.append(f"{{gray}}{altgr}")
+                
+                if ctrl:
+                    if ctrl == active:
+                        parts.append(f"{{{config.get('highlight_color', 'orange')}}}{ctrl}")
+                    else:
+                        parts.append(f"{{gray}}{ctrl}")
+                
                 return ''.join(parts)
             
             elif display_mode == 'alternative':
                 # Only show alternative when modifier is pressed
                 if 'Shift' in self.modifier_keys and 'shift' in alternatives:
                     return alternatives['shift']
+                elif 'Alt' in self.modifier_keys and 'altgr' in alternatives:
+                    return alternatives['altgr']
                 elif 'Alt' in self.modifier_keys and 'alt' in alternatives:
-                    return alternatives.get('alt', alternatives.get('base', key))
+                    return alternatives['alt']
+                elif 'Ctrl' in self.modifier_keys and 'ctrl' in alternatives:
+                    return alternatives['ctrl']
                 else:
                     return alternatives.get('base', key)
         

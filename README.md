@@ -116,10 +116,28 @@ Only define alternatives for:
 - Custom behaviors
 
 Supports modifiers:
-- `base` - Default character
+- `base` - Default character (no modifiers)
 - `shift` - With Shift pressed
 - `alt` - With Alt pressed
+- `altgr` - With AltGr pressed (right Alt on international keyboards)
 - `ctrl` - With Ctrl pressed
+
+Example with multiple modifiers:
+```json
+"key_alternatives": {
+  "E": {
+    "base": "e",
+    "shift": "E",
+    "alt": "é",
+    "altgr": "€"
+  },
+  "2": {
+    "base": "2",
+    "shift": "@",
+    "altgr": "²"
+  }
+}
+```
 
 ### Custom Key Widths
 
@@ -227,6 +245,7 @@ You can create different layouts for different keyboard types:
 - **QWERTY** (default) - `keyboard_config.json`
 - **Gaming** - `keyboard_config_example.json` with WASD colors
 - **Japanese** - `keyboard_config_japanese.json` with Japanese layout alternatives
+- **European/International** - `keyboard_config_european.json` with AltGr for accented characters and symbols
 - **DVORAK** - Rearrange keys in the layout array
 - **60% keyboard** - Remove function keys and numpad
 - **Custom** - Any layout you want!
@@ -240,6 +259,14 @@ See `keyboard_config_japanese.json` for a Japanese keyboard layout with:
 - Active character highlighted based on modifier state
 - Example: `4` shows as `$4` with `$` highlighted when Shift is pressed
 - Example: `w` shows as `Ww` with `W` highlighted when Shift is pressed
+
+### European/International Keyboard Example
+
+See `keyboard_config_european.json` for a European keyboard layout with:
+- AltGr support for accented characters: `e` → `é` (Alt) → `€` (AltGr)
+- Common European symbols: `²`, `³`, `€`, `©`, `æ`, `œ`
+- Multiple modifiers per key: base, shift, alt, and altgr
+- Example: `E` key shows `€éEe` with all variants visible in "all" mode
 
 ## Requirements
 
